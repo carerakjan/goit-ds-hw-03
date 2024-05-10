@@ -6,6 +6,9 @@ name = "pypi"
 [packages]
 pymongo = "4.7.2"
 certifi = "*"
+lxml = "*"
+requests = "*"
+beautifulsoup4 = "*"
 
 [dev-packages]
 

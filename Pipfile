@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 pymongo = "4.7.2"
+certifi = "*"
 
 [dev-packages]
 

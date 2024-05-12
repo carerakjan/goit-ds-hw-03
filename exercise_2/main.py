@@ -12,7 +12,6 @@ from bs4 import BeautifulSoup
 import serializer
 from author import AuthorParser
 from quote import QuoteParser
-import re
 
 
 max_pages = 5

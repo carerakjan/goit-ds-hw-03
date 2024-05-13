@@ -10,8 +10,8 @@
 import requests
 from bs4 import BeautifulSoup
 from serializer import Serializer
-from author import AuthorParser
-from quote import QuoteParser
+from author import AuthorParser, Author
+from quote import QuoteParser, Quote
 from mongo_client import client
 
 
@@ -31,9 +31,9 @@ def main():
     site_url = "https://quotes.toscrape.com"
     quotes_json = "quotes.json"
     authors_json = "authors.json"
-    quotes = Serializer().load(quotes_json)
-    authors = Serializer().load(authors_json)
-   
+    quotes = Serializer(factory=lambda _: Quote(**_)).load(quotes_json)
+    authors = Serializer(factory=lambda _: Author(**_)).load(authors_json)
+
     if not quotes or not authors:
         for i in range(max_pages):
             soup = get_page_content(site_url, f'page/{i + 1}')
@@ -43,19 +43,19 @@ def main():
         
         authors_urls = {q.author_url for q in quotes}
         
-        for endpoint in authors_urls:
+        for endpoint in sorted(authors_urls):
             soup = get_page_content(site_url, endpoint[1:])
             author = AuthorParser(soup).data
             authors.append(author)
         
-        Serializer(quotes).save(quotes_json)
-        Serializer(authors).save(authors_json)
+        quotes.save(quotes_json)
+        authors.save(authors_json)
     
     quotes_db, authors_db = create_db()
     quotes_db.delete_many({})
     authors_db.delete_many({})
-    quotes_db.insert_many(quotes)
-    authors_db.insert_many(authors)
+    quotes_db.insert_many(quotes.to_json())
+    authors_db.insert_many(authors.to_json())
 
 if __name__ == '__main__':
     main()

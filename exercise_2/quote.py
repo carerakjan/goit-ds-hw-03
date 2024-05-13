@@ -6,8 +6,8 @@ from bs4 import Tag
 class Quote:
     tags: list[str]
     author: str
-    author_url: str
     quote: str
+    author_url: str = ''
 
     def serialize(self) -> object:
         obj = self.__dict__.copy()

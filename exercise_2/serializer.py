@@ -8,7 +8,7 @@ class Serializable(Protocol):
 
 
 class Serializer(UserList):
-    def __init__(self, initlist=list[Serializable]):
+    def __init__(self, initlist:list[Serializable]=None):
         super().__init__(initlist=initlist)
 
     def save(self, file_name):
@@ -16,6 +16,9 @@ class Serializer(UserList):
             json.dump([it.serialize() for it in self.data], file)
 
 
-    def load(file_name):
-        with open(file_name, mode="r", encoding="utf-8") as file:
-            return json.load(file)
+    def load(self, file_name):
+        try:
+            with open(file_name, mode="r", encoding="utf-8") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return []

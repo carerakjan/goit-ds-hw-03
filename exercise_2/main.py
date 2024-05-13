@@ -12,37 +12,48 @@ from bs4 import BeautifulSoup
 from serializer import Serializer
 from author import AuthorParser
 from quote import QuoteParser
+from mongo_client import client
 
 
-max_pages = 5
-site_url = "https://quotes.toscrape.com"
-
-
-def get_page_content(endpoint):
-    url = "/".join([site_url, endpoint])
+def get_page_content(siteurl, endpoint):
+    url = "/".join([siteurl, endpoint])
     response = requests.get(url)
     return BeautifulSoup(response.text, "lxml")
 
 
-quotes = []
-for i in range(max_pages):
-    soup = get_page_content(f'page/{i + 1}')
-    for tag in soup.select(selector=".quote"):
-        quote = QuoteParser(tag).data
-        quotes.append(quote)
-
-serializer = Serializer(quotes)
-serializer.save("quotes.json")
+def create_db():
+    db = client.hbs_exercise_2
+    return db.quotes, db.authors
 
 
-authors_urls = {q.author_url for q in quotes}
+def main():
+    max_pages = 5
+    site_url = "https://quotes.toscrape.com"
+    quotes_json = "quotes.json"
+    authors_json = "authors.json"
+    quotes = Serializer().load(quotes_json)
+    authors = Serializer().load(authors_json)
+   
+    if not quotes or not authors:
+        for i in range(max_pages):
+            soup = get_page_content(site_url, f'page/{i + 1}')
+            for tag in soup.select(selector=".quote"):
+                quote = QuoteParser(tag).data
+                quotes.append(quote)
+        
+        authors_urls = {q.author_url for q in quotes}
+        
+        for endpoint in authors_urls:
+            soup = get_page_content(site_url, endpoint[1:])
+            author = AuthorParser(soup).data
+            authors.append(author)
+        
+        Serializer(quotes).save(quotes_json)
+        Serializer(authors).save(authors_json)
+    
+    quotes_db, authors_db = create_db()
+    quotes_db.insert_many(quotes)
+    authors_db.inserty_many(authors)
 
-
-authors = []
-for endpoint in authors_urls:
-    soup = get_page_content(endpoint[1:])
-    author = AuthorParser(soup).data
-    authors.append(author)
-
-serializer = Serializer(authors)
-serializer.save("authors.json")
+if __name__ == '__main__':
+    main()

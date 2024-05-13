@@ -9,38 +9,40 @@
 
 import requests
 from bs4 import BeautifulSoup
-import serializer
+from serializer import Serializer
 from author import AuthorParser
 from quote import QuoteParser
 
 
 max_pages = 5
 site_url = "https://quotes.toscrape.com"
-quotes_endpoint = "page"
 
 
-def get_page_content(page_endpoint, page_num):
-    url = "/".join([site_url, page_endpoint, str(page_num)])
+def get_page_content(endpoint):
+    url = "/".join([site_url, endpoint])
     response = requests.get(url)
     return BeautifulSoup(response.text, "lxml")
 
 
 quotes = []
 for i in range(max_pages):
-    soup = get_page_content(quotes_endpoint, i + 1)
+    soup = get_page_content(f'page/{i + 1}')
     for tag in soup.select(selector=".quote"):
         quote = QuoteParser(tag).data
         quotes.append(quote)
-serializer.save("quotes.json", [q.serialize() for q in quotes])
+
+serializer = Serializer(quotes)
+serializer.save("quotes.json")
 
 
 authors_urls = {q.author_url for q in quotes}
 
 
 authors = []
-for aut_url in authors_urls:
-    endpoint, unique_part = aut_url[1:].split("/")
-    soup = get_page_content(endpoint, unique_part)
+for endpoint in authors_urls:
+    soup = get_page_content(endpoint[1:])
     author = AuthorParser(soup).data
     authors.append(author)
-serializer.save("authors.json", [a.serialize() for a in authors])
+
+serializer = Serializer(authors)
+serializer.save("authors.json")

@@ -52,8 +52,10 @@ def main():
         Serializer(authors).save(authors_json)
     
     quotes_db, authors_db = create_db()
+    quotes_db.delete_many({})
+    authors_db.delete_many({})
     quotes_db.insert_many(quotes)
-    authors_db.inserty_many(authors)
+    authors_db.insert_many(authors)
 
 if __name__ == '__main__':
     main()
